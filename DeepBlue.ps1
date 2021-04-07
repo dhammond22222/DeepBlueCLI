@@ -83,15 +83,7 @@ function Main {
     }
     ForEach ($event in $events) {
         # Custom reporting object:
-        $obj = [PSCustomObject]@{
-            Date    = $event.TimeCreated
-            Log     = $logname
-            EventID = $event.id
-            Message = ""
-            Results = ""
-            Command = ""
-            Decoded = ""
-        }
+        $obj = Create-New-Custom-Object $event $logname
         $eventXML = [xml]$event.ToXml()
         $servicecmd=0 # CLIs via service creation get extra checks, this defaults to 0 (no extra checks)
         if ($logname -eq "Security"){
@@ -550,23 +542,26 @@ function Main {
         }
     }
     # Iterate through failed logons hashtable (key is $username)
+
     foreach ($username in $failedlogons.Keys) {
         $count=$failedlogons.Get_Item($username)
         if ($count -gt $maxfailedlogons){
-            $obj.Message="High number of logon failures for one account"
-            $obj.Results= "Username: $username`n"
-            $obj.Results += "Total logon failures: $count"
-            $obj.EventId = 4625
-            Write-Output $obj
+            $user_obj = Create-New-Custom-Object $event $logname
+            $user_obj.Message="High number of logon failures for one account"
+            $user_obj.Results= "Username: $username`n"
+            $user_obj.Results += "Total logon failures: $count"
+            $user_obj.EventId = 4625
+            Write-Output $user_obj
         }
     }
     # Password spraying:
     if (($totalfailedlogons -gt $maxfailedlogons) -and ($totalfailedaccounts -gt 1)) {
-        $obj.Message="High number of total logon failures for multiple accounts"
-        $obj.Results= "Total accounts: $totalfailedaccounts`n"
-        $obj.Results+= "Total logon failures: $totalfailedlogons`n"
-        $obj.EventId = 4625
-        Write-Output $obj
+        $password_spray_obj = Create-New-Custom-Object $event $logname
+        $password_spray_obj.Message="High number of total logon failures for multiple accounts"
+        $password_spray_obj.Results= "Total accounts: $totalfailedaccounts`n"
+        $password_spray_obj.Results+= "Total logon failures: $totalfailedlogons`n"
+        $password_spray_obj.EventId = 4625
+        Write-Output $password_spray_obj
     }
 } 
 
@@ -791,6 +786,19 @@ function Remove-Spaces($string){
     #      to this: Application: C:\Program Files (x86)\Internet Explorer\iexplore.exe
     $string = $string.trim() -Replace "\s+:",":"
     return $string
+}
+
+function Create-New-Custom-Object($event, $logname)
+{
+    return [PSCustomObject]@{
+        Date     = $event.TimeCreated
+        Log      = $logname
+        EventID  = $event.id
+        Message  = ""
+        Results  = ""
+        Command  = ""
+        Decoded  = ""
+    }
 }
 
 . Main
