@@ -546,12 +546,12 @@ function Main {
     foreach ($username in $failedlogons.Keys) {
         $count=$failedlogons.Get_Item($username)
         if ($count -gt $maxfailedlogons){
-            $user_obj = Create-New-Custom-Object $event $logname
-            $user_obj.Message="High number of logon failures for one account"
-            $user_obj.Results= "Username: $username`n"
-            $user_obj.Results += "Total logon failures: $count"
-            $user_obj.EventId = 4625
-            Write-Output $user_obj
+            $obj = Create-New-Custom-Object $event $logname
+            $obj.Message="High number of logon failures for one account"
+            $obj.Results= "Username: $username`n"
+            $obj.Results += "Total logon failures: $count"
+            $obj.EventId = 4625
+            Write-Output $obj
         }
     }
     # Password spraying:
